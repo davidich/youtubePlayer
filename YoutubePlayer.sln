@@ -6,9 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackList", "TrackList\TrackList.csproj", "{81032114-3E6B-4002-831B-C4A2DCA836A6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{32C4ACDF-8C66-4C60-866D-CDFCC56ECFD8}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\packages.config = .nuget\packages.config
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoutubeHelpers", "YoutubeHelpers\YoutubeHelpers.csproj", "{1035DCF3-04E7-4DFB-B893-409CE2A22DE4}"
 EndProject

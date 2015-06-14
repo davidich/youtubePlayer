@@ -31,8 +31,6 @@
 
                 Playlist.Enqueue(playlistItem);
 
-                //var json = JsonConvert.SerializeObject(Playlist, jsonSerializerSettings);
-
                 Clients.All.updatePlaylist(Playlist);
             }
             catch
