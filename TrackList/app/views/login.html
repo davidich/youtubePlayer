@@ -1,0 +1,37 @@
+﻿<div class="row">
+    <div class="panel panel-default" style="width: 500px; margin: 100px auto;">
+
+        <div class="panel-body">
+            <div class="col-xs-4">
+                <img src="/Content/YouTube.png" style="width: 125px;" />
+            </div>
+            <div class="col-xs-8">
+                <form name="loginForm" novalidate ng-submit="loginForm.$valid && login()">
+                    <fieldset ng-disabled="isFormLocked">
+                        <div class="form-group" ng-class="{'has-error': loginForm.username.$invalid && loginForm.$submitted }">
+                            <label class="control-label" for="username">User name</label>
+                            <input class="form-control" name="username" type="text" placeholder="Name" required ng-minlength="3" ng-model="username" id="username">
+                            <div ng-show="loginForm.$submitted" style="margin-top: 3px; color: #a94442; font-size: 12px;">
+                                <span ng-show="loginForm.username.$error.required">
+                                    Value is required!
+                                </span>
+                                <span ng-show="loginForm.username.$error.minlength">
+                                    Minimal length is 3 characters!
+                                </span>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-default" style="min-width: 100px;">
+                            
+                            <i class="fa fa-arrow-circle-o-right    " ng-hide="isFormLocked"></i>
+                            <span ng-hide="isFormLocked" style="margin-left: 3px">Login</span>
+
+                            <i class="fa fa-spinner fa-spin" ng-show="isFormLocked"></i>
+                            <span ng-show="isFormLocked" style="margin-left: 3px">Login...</span>
+                            
+                        </button>                        
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

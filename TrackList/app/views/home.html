@@ -1,0 +1,99 @@
+﻿<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <span class="navbar-brand">User: {{user.name}}</span>
+        </div>
+        <div class="collapse navbar-collapse">
+            <form class="navbar-form navbar-right" ng-submit="addUrl()" name="addTrackForm">
+                <div class="form-group">
+                    <input type="url" class="form-control" placeholder="youtube url" required ng-model="newTrackUrl">
+                </div>
+                <button type="submit" class="btn btn-default">Add</button>
+            </form>
+        </div>
+        <div>
+            <button ng-click="prefill()" ng-show="user.name == 'oleksiy'">
+                Prefill
+            </button>
+        </div>
+    </div>
+</nav>
+<div class="row">
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Current track
+            </div>
+            <div class="panel-body">
+                <div>
+                    <img ng-src="{{currentTrack.Info.ImageUrl}}" width="100%" />
+                </div>
+            </div>
+            <div class="panel-footer" style="font-size: 12px;">
+                <div>
+                    <span style="font-weight: bold; font-style: italic;">Title:</span>
+                    <span style="">{{currentTrack.Info.Title}}</span>
+                </div>
+                <div>
+                    <span style="font-weight: bold; font-style: italic;">Time remaining:</span>
+                    <span style="">{{trackTime}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Playlist
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">
+                                #
+                            </th>
+                            <th style="width: 90px;">
+                                Added By
+                            </th>
+                            <th>
+                                Title
+                            </th>
+                            <th style="width: 90px;">
+                                Duration
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="track in tracks">
+                            <td>
+                                <span ng-show="$index > 0">
+                                    {{$index}}
+                                </span>
+                                <span ng-show="$index == 0">
+                                    <i class="fa fa-play"></i>
+                                </span>
+                            </td>
+                            <td>
+                                {{track.AddedBy}}
+                            </td>
+                            <td>
+                                {{track.Info.Title}}
+                            </td>
+                            <td>
+                                {{track.Info.Duration}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>
+<div ng-show="user.name == 'oleksiy'" class="col-md-12">
+    <button ng-click="moveNext()">
+        Skip
+    </button>
+    <iframe id="player" width="420" height="315" frameborder="0" allowfullscreen></iframe>
+</div>
