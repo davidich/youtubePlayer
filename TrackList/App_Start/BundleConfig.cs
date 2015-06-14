@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web.Optimization;
+﻿using System.Web.Optimization;
 
 namespace TrackList
 {
@@ -26,14 +23,12 @@ namespace TrackList
                 "~/Scripts/angular-route.js"));
 
             bundles.Add(new ScriptBundle("~/bundles/app").Include(
+                "~/app/app.js",
                 "~/app/services/*.js",
-                "~/app/controllers/*.js",
-                "~/app/app.js"));
+                "~/app/controllers/*.js"));
 
             bundles.Add(new StyleBundle("~/Content/css").Include(
-                 "~/Content/bootstrap.css"
-                 //,"~/Content/Site.css"
-                 ));
+                 "~/Content/bootstrap.css"));
         }
     }
 }

@@ -1,14 +1,14 @@
 ﻿'use strict';
 
-/* App Module */
+// Services module setup
+angular.module('services', []);
 
-var app = angular.module('app', [
-  'ngRoute',
-  'controllers',
-  'services'
-]);
+// Controllers module setup
+angular.module('controllers', ['services']);
 
-app.config([
+// App module setup
+angular.module('app', ['ngRoute', 'controllers', 'services']);
+angular.module('app').config([
     '$routeProvider',
     function ($routeProvider) {
         $routeProvider.
@@ -16,7 +16,7 @@ app.config([
                 templateUrl: 'app/views/home.html',
                 controller: 'HomeCtrl'
             }).
-            when('/login', {
+            when('/login/:username?', {
                 templateUrl: 'app/views/login.html',
                 controller: 'LoginCtrl'
             }).

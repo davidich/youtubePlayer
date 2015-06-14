@@ -156,8 +156,9 @@
     <Compile Include="SignalR\TrackListHub.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="app\services\services.js" />
-    <Content Include="app\controllers\controllers.js" />
+    <Content Include="app\controllers\loginCtrl.js" />
+    <Content Include="app\services\hub.js" />
+    <Content Include="app\controllers\homeCtrl.js" />
     <Content Include="app\views\login.html" />
     <Content Include="Content\bootstrap-theme.css" />
     <Content Include="Content\bootstrap-theme.min.css" />

@@ -1,42 +1,32 @@
 ﻿'use strict';
 
-/* Controllers */
-
-var controllers = angular.module('controllers', ['services']);
-
-controllers.controller('LoginCtrl', function ($scope, $location, signalR, user) {
-    $scope.login = function () {
-        // set user name
-        user.name = $scope.username;
-
-        // prevent form updates
-        $scope.isFormLocked = true;
-
-        // go to home page
-        $location.path("/home/" + user.name);
-    };
-});
-
-controllers.controller('HomeCtrl', function ($scope, $route, $location, $timeout, $interval, signalR, user) {
-    if (user.name != $route.current.params.username) {
-        user.name = $route.current.params.username;
-    }
-
-    if (!user.isValid()) {
-        $location.path("/login");
+angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $location, $timeout, $interval, hub) {
+    if (!hub.isConnected()) {
+        var loginPath = "/login";
+        if ($route.current.params.username) {
+            loginPath += "/" + $route.current.params.username;
+        }
+        $location.path(loginPath);
         return;
     }
-
-    signalR.init(function () {
-        signalR.triggerPlaylistUpdate();
-    });
-
-    $scope.user = user;
+    $scope.hub = hub;
+    $scope.username = hub.getUsername();
     $scope.currentTrack = {};
     $scope.trackTime = "0:00";
     $scope.tracks = [];
+    $scope.users = [];
 
-    signalR.setPlaylistUpdateCallback(function (data) {
+    // Define Client Callbacks
+    function onUserListUpdated(data) {
+        console.log("onUserListUpdated:");
+        console.log(data);
+        console.log("-------------");
+
+        $scope.users = data;
+        $scope.$digest();
+    }
+
+    function onTrackListUpdated(data) {
         console.log("setPlaylistUpdateCallback:");
         console.log(data);
         console.log("-------------");
@@ -47,14 +37,28 @@ controllers.controller('HomeCtrl', function ($scope, $route, $location, $timeout
             setCurrentTrack(data[0]);
 
         $scope.tracks = data;
-
         $scope.$digest();
-    });
+    }
 
-    signalR.setTimeUpdateCallback(function(value) {
+    function onRemainingTimeUpdated(value) {
         $scope.trackTime = value;
         $scope.$digest();
+    }
+
+    hub.setCallbacks({
+        updateUserList: onUserListUpdated,
+        updatePlaylist: onTrackListUpdated,
+        updateRemainingTime: onRemainingTimeUpdated
     });
+    // .Define Client Callbacks
+
+    // Fetch initial data
+    hub.getInitialDataAsync()
+        .done(function (data) {
+            onTrackListUpdated(data.Playlist);
+            onUserListUpdated(data.Users);
+        });
+
 
     function setCurrentTrack(track) {
         console.log("setCurrentTrack:");
@@ -73,8 +77,7 @@ controllers.controller('HomeCtrl', function ($scope, $route, $location, $timeout
             }
         }
 
-        if (user.name === "oleksiy" && track)
-            play(track);
+        if (hub.getUsername() === "oleksiy") play(track);
     }
 
     var intervalHandle;
@@ -118,10 +121,11 @@ controllers.controller('HomeCtrl', function ($scope, $route, $location, $timeout
     }
 
     function play(track) {
-        console.log("play:");
-        console.log(track);
-        console.log("-------------");
-
+        if (!track) {
+            $("#player").attr("src", "");
+            return;
+        }
+        
         $("#player").attr("src", track.Info.AdFreeUrl);
 
         stopTimer();
@@ -130,7 +134,7 @@ controllers.controller('HomeCtrl', function ($scope, $route, $location, $timeout
 
         intervalHandle = $interval(function () {
             if (durationInSecs > 0) {
-                durationInSecs--;                
+                durationInSecs--;
             } else {
                 $("#player").attr("src", "");
                 stopTimer();
@@ -138,7 +142,7 @@ controllers.controller('HomeCtrl', function ($scope, $route, $location, $timeout
             }
 
             $scope.trackTime = getDuration(durationInSecs);
-            signalR.updateRemainingTime($scope.trackTime);
+            hub.updateRemainingTime($scope.trackTime);
 
         }, 1000);
     }
@@ -155,7 +159,7 @@ controllers.controller('HomeCtrl', function ($scope, $route, $location, $timeout
         setCurrentTrack($scope.tracks[0]);
 
         // report to server
-        signalR.moveNext();
+        hub.moveNext();
     }
 
     $scope.addUrl = function () {
@@ -163,13 +167,13 @@ controllers.controller('HomeCtrl', function ($scope, $route, $location, $timeout
             return;
 
         var url = $scope.newTrackUrl;
-        signalR.sendUrl(url);
+        hub.sendUrl(url);
         $scope.newTrackUrl = "";
     }
 
     $scope.prefill = function () {
-        signalR.sendUrl("https://www.youtube.com/watch?v=uU8Gv46o9WA");
-        signalR.sendUrl("https://www.youtube.com/watch?v=knNCvqKWRws");
+        hub.sendUrl("https://www.youtube.com/watch?v=uU8Gv46o9WA");
+        hub.sendUrl("https://www.youtube.com/watch?v=knNCvqKWRws");
         //signalR.sendUrl("https://www.youtube.com/watch?v=LDwbMUjpqos");
     }
 
