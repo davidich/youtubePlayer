@@ -1,6 +1,27 @@
 ﻿'use strict';
 
-angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $location, $timeout, $interval, hub) {
+angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $location, $timeout, $interval, hub, ytPlayer) {
+
+    //ytPlayer.init("playerId");
+
+    //$(ytPlayer).on("stateChanged", function (e, state) {
+    //    console.log(state);
+    //});
+
+    //$scope.$on("$destroy", function () {
+    //    $(ytPlayer).off("stateChanged");
+    //});
+
+    //$scope.playPause = function () {
+    //    if (ytPlayer.isStopped()) {
+    //        ytPlayer.loadAndPlay('M7lc1UVf-VE', 65);
+    //    } else {
+    //        ytPlayer.playPause();
+    //    }        
+    //}
+
+    //return;    
+
     if (!hub.isConnected()) {
         var loginPath = "/login";
         if ($route.current.params.username) {

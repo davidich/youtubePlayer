@@ -1,5 +1,8 @@
 ﻿'use strict';
 
+// Directives module setup
+angular.module('directives', []);
+
 // Services module setup
 angular.module('services', []);
 
@@ -7,7 +10,7 @@ angular.module('services', []);
 angular.module('controllers', ['services']);
 
 // App module setup
-angular.module('app', ['ngRoute', 'controllers', 'services']);
+angular.module('app', ['ngRoute', 'controllers', 'services', 'directives']);
 angular.module('app').config([
     '$routeProvider',
     function ($routeProvider) {

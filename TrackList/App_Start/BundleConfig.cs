@@ -24,6 +24,7 @@ namespace TrackList
 
             bundles.Add(new ScriptBundle("~/bundles/app").Include(
                 "~/app/app.js",
+                "~/app/directives/*.js",
                 "~/app/services/*.js",
                 "~/app/controllers/*.js"));
 

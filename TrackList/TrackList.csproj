@@ -157,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="app\controllers\loginCtrl.js" />
+    <Content Include="app\services\ytPlayer.js" />
     <Content Include="app\services\hub.js" />
     <Content Include="app\controllers\homeCtrl.js" />
     <Content Include="app\views\login.html" />
@@ -979,6 +980,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="app\directives\" />
     <Folder Include="App_Data\" />
   </ItemGroup>
   <ItemGroup>
