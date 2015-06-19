@@ -13,6 +13,22 @@
         </div>
     </div>
 </nav>
+<style>
+    /*.slider-input {
+        width: 100%;
+    }*/
+
+    .play-pause {
+        width: 25px;
+    }
+    .time-slider {
+        padding: 0 15px;
+    }
+
+    .volume-slider {
+        width: 90px
+    }
+</style>
 <div class="row">
     <div class="col-md-4">
         <div class="panel panel-default">
@@ -21,10 +37,29 @@
             </div>
             <div class="panel-body">
                 <div>
-                    <img ng-src="{{currentTrack.Info.ImageUrl}}" width="100%" />
+                    <img ng-src="{{currentTrack.imageUrl}}" width="100%" />
                 </div>
             </div>
             <div class="panel-footer" style="font-size: 12px;">
+                <div>
+                    <table style="width: 100%" class="player-controls">
+                        <tr >
+                            <td class="play-pause">
+                                <button ng-click="player.playPause()">
+                                    <i class="fa fa-play" ng-hide="player.isPlaying()"></i>
+                                    <i class="fa fa-pause" ng-show="player.isPlaying()"></i>
+                                </button>
+                            </td>
+                            <td class="time-slider">
+                                <slider ng-model="currentTrack.time" min="0" step="1" max="currentTrack.length" tooltip="hide" on-stop-slide="broadcastVolumeValue" style="width: 100%;" ng-disabled="true" handle="triangle"></slider>
+                            </td>
+                            <td class="volume-slider">
+                                <i class="fa fa-volume-up" style="font-size: 150%;"></i>
+                                <slider ng-model="playerVolume" min="0" step="5" max="100" on-stop-slide="broadcastVolumeValue" style="width: 60px; float: right;"></slider>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
                 <div>
                     <span style="font-weight: bold; font-style: italic;">Title:</span>
                     <span style="">{{currentTrack.Info.Title}}</span>
@@ -32,6 +67,9 @@
                 <div>
                     <span style="font-weight: bold; font-style: italic;">Time remaining:</span>
                     <span style="">{{trackTime}}</span>
+                </div>
+                <div>
+                    {{currentTrack | json}}
                 </div>
             </div>
         </div>
@@ -61,12 +99,13 @@
                     </thead>
                     <tbody>
                         <tr ng-repeat="track in tracks">
-                            <td>
-                                <span ng-show="$index > 0">
-                                    {{$index}}
+                            <td ng-click="playPauseTrack(track)">
+                                <span ng-show="track.Id != currentTrack.id">
+                                    {{$index + 1}}
                                 </span>
-                                <span ng-show="$index == 0">
-                                    <i class="fa fa-play"></i>
+                                <span ng-show="track.Id == currentTrack.id">
+                                    <i class="fa fa-play" ng-hide="player.isPlaying()"></i>
+                                    <i class="fa fa-pause" ng-show="player.isPlaying()"></i>
                                 </span>
                             </td>
                             <td>
@@ -106,16 +145,6 @@
         <button ng-click="prefill()">
             Prefill
         </button>
-        <button ng-click="moveNext()">
-            Skip
-        </button>
-
-        <button ng-click="playPause()">
-            Play / Pause
-        </button>
     </div>
-    <div>
-        <iframe id="player" width="420" height="315" frameborder="0" allowfullscreen></iframe>
-    </div>
-    <div id="playerId"></div>    
+    <div id="playerId"></div>
 </div>

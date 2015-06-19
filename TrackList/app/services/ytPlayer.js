@@ -7,8 +7,9 @@ angular.module('services').factory('ytPlayer', function ($window, $document, $q)
         playerElementId = undefined,
         playerDeferred = $q.defer(),
         state = {
-            mode: "stopped",    //("playing", "paused")
-            volume: 100         //(0 - 100)
+            mode: "STOPPED",    // ("PLAYING", "PAUSED")
+            length: 0,          // cur track lenght in secs
+            time: 0             // cur track time in secs
         };
 
     // Youtube API callback for iFrame ready event
@@ -29,6 +30,15 @@ angular.module('services').factory('ytPlayer', function ($window, $document, $q)
     function onPlayerReady() {
         isInited = true;
         playerDeferred.resolve();
+
+        setInterval(function() {
+            var curTime = Math.round(player.getCurrentTime());
+
+            if (curTime != state.time) {
+                state.time = curTime;
+                onStateChanged("time");
+            }
+        }, 100);
     }
 
     // Youtube API callback
@@ -40,24 +50,31 @@ angular.module('services').factory('ytPlayer', function ($window, $document, $q)
     //   3 - YT.PlayerState.BUFFERING
     //   5 - YT.PlayerState.CUED
     function onPlayerStateChange(event) {
-        var prevMode = state.mode;
+        var prevMode = state.mode,
+            prevLength = state.length;
+
         switch (event.data) {
             case YT.PlayerState.PLAYING:    // 1
                 state.mode = "PLAYING";
+                state.length = Math.round(player.getDuration());
                 break;
             case YT.PlayerState.PAUSED:     // 2
                 state.mode = "PAUSED";
                 break;
             default:
                 state.mode = "STOPPED";
+                state.length = 0;
         }
-        if (prevMode != state.mode) {
-            onStateChanged();
+
+        if (prevLength != state.length) {
+            onStateChanged("length");
+        }
+        else if (prevMode != state.mode) {
+            onStateChanged("mode");
         }
     }
 
-    function onStateChanged() {
-        // TODO: think about event unsubscribe on page leave
+    function onStateChanged(reason) {
         $(self).trigger("stateChanged", state);
     }
 
@@ -97,12 +114,13 @@ angular.module('services').factory('ytPlayer', function ($window, $document, $q)
         if (parsedValue < 0) parsedValue = 0;
         if (parsedValue > 100) parsedValue = 100;
 
-        if (state.volume != parsedValue) {
-            state.volume = parsedValue;
-            player.setVolume(parsedValue);
-            onStateChanged();
-        }
+        player.setVolume(parsedValue);                    
     },
+
+    self.isPlaying = function () {
+        var st = player.getPlayerState();
+        return st == YT.PlayerState.PLAYING;
+    }
 
     self.isStopped = function() {
         var st = player.getPlayerState();

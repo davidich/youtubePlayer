@@ -2,26 +2,6 @@
 
 angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $location, $timeout, $interval, hub, ytPlayer) {
 
-    //ytPlayer.init("playerId");
-
-    //$(ytPlayer).on("stateChanged", function (e, state) {
-    //    console.log(state);
-    //});
-
-    //$scope.$on("$destroy", function () {
-    //    $(ytPlayer).off("stateChanged");
-    //});
-
-    //$scope.playPause = function () {
-    //    if (ytPlayer.isStopped()) {
-    //        ytPlayer.loadAndPlay('M7lc1UVf-VE', 65);
-    //    } else {
-    //        ytPlayer.playPause();
-    //    }        
-    //}
-
-    //return;    
-
     if (!hub.isConnected()) {
         var loginPath = "/login";
         if ($route.current.params.username) {
@@ -30,46 +10,73 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
         $location.path(loginPath);
         return;
     }
+
     $scope.hub = hub;
     $scope.username = hub.getUsername();
-    $scope.currentTrack = {};
-    $scope.trackTime = "0:00";
     $scope.tracks = [];
     $scope.users = [];
 
+    $scope.currentTrack = {
+        id: 0,
+        time: 0,
+        length: 0,
+        imageUrl: 0
+    };
+
+    $scope.playerVolume = 100;
+
+    ytPlayer.init("playerId").then(function () {
+        $scope.player = ytPlayer;
+
+        $(ytPlayer).on("stateChanged", function (e, state) {
+            $scope.currentTrack.time = state && state.time || 0;
+            $scope.currentTrack.length = state && state.length || 0;
+            $scope.$digest();
+
+        });
+
+        $scope.$on("$destroy", function () {
+            $(ytPlayer).off("stateChanged");
+        });
+
+        $scope.$watch("playerVolume", function () {
+            ytPlayer.setVolume($scope.playerVolume);
+        });
+
+        $scope.broadcastVolumeValue = function () {
+            onStateChanged();
+        };
+    });
+    
+
+    function onStateChanged() {
+        //notify other clients
+        console.log($scope.playerState);
+    }
+    
     // Define Client Callbacks
     function onUserListUpdated(data) {
-        console.log("onUserListUpdated:");
-        console.log(data);
-        console.log("-------------");
-
         $scope.users = data;
         $scope.$digest();
     }
 
     function onTrackListUpdated(data) {
-        console.log("setPlaylistUpdateCallback:");
-        console.log(data);
-        console.log("-------------");
-
-        if (data.length == 0)
-            setCurrentTrack(undefined);
-        else if ($scope.tracks.length == 0 || $scope.tracks[0].Id != data[0].Id)
-            setCurrentTrack(data[0]);
-
         $scope.tracks = data;
         $scope.$digest();
+
+        if (data.length > 0 && $scope.tracks.length === 0)
+            playNext();        
     }
 
-    function onRemainingTimeUpdated(value) {
-        $scope.trackTime = value;
-        $scope.$digest();
-    }
+    //function onRemainingTimeUpdated(value) {
+    //    $scope.trackTime = value;
+    //    $scope.$digest();
+    //}
 
     hub.setCallbacks({
         updateUserList: onUserListUpdated,
         updatePlaylist: onTrackListUpdated,
-        updateRemainingTime: onRemainingTimeUpdated
+        //updateRemainingTime: onRemainingTimeUpdated
     });
     // .Define Client Callbacks
 
@@ -81,14 +88,12 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
         });
 
 
-    function setCurrentTrack(track) {
-        console.log("setCurrentTrack:");
-        console.log(track);
-        console.log("-------------");
+    function playNext() {
+        $scope.playerState.currentTrackId = $scope.tracks[0] && $scope.tracks[0].Id;
 
-        if (track)
-            $scope.currentTrack = track;
-        else {
+        //if (track)
+        //    $scope.currentTrack = track;
+        //else {
             $scope.currentTrack = {
                 Info: {
                     ImageUrl: "/Content/No_image_available.png",
@@ -96,9 +101,25 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
                     Duration: "00:00:00"
                 }
             }
-        }
+        //}
 
         if (hub.getUsername() === "oleksiy") play(track);
+    }
+
+    $scope.playPauseTrack = function (track) {
+        if ($scope.currentTrack.id == track.Id) {
+            $scope.player.playPause();
+        } else {
+            $scope.currentTrack.id = track.Id;
+            $scope.currentTrack.time = 0;
+            $scope.currentTrack.length = track.Info.TotalSeconds;
+            $scope.currentTrack.imageUrl = track.Info.ImageUrl;
+            $scope.player.loadAndPlay(track.Id);
+        }
+    }
+
+    $scope.playPause = function () {
+        $scope.player.playPause();
     }
 
     var intervalHandle;
@@ -146,7 +167,7 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
             $("#player").attr("src", "");
             return;
         }
-        
+
         $("#player").attr("src", track.Info.AdFreeUrl);
 
         stopTimer();
