@@ -23,6 +23,10 @@ angular.module('app').config([
                 templateUrl: 'app/views/login.html',
                 controller: 'LoginCtrl'
             }).
+             when('/kickout/:kicker', {
+                 templateUrl: 'app/views/kicker.html',
+                 controller: 'KickerCtrl'
+             }).
             otherwise({
                 redirectTo: '/login'
             });

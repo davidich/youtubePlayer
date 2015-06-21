@@ -127,5 +127,10 @@ angular.module('services').factory('ytPlayer', function ($window, $document, $q)
         return st != YT.PlayerState.PLAYING && st != YT.PlayerState.PAUSED;
     }
 
+    self.destroy = function () {
+        isInited = false;
+        player.destroy();
+    }
+
     return self;
 });

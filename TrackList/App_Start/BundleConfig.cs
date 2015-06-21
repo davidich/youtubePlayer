@@ -32,6 +32,7 @@ namespace TrackList
 
             bundles.Add(new StyleBundle("~/Content/css").Include(
                  "~/Content/bootstrap.css",
+                 "~/Scripts/angular-csp.css",
                  "~/Content/bootstrap-slider.css"));
         }
     }

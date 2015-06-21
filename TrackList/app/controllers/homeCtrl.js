@@ -2,91 +2,81 @@
 
 angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $location, $timeout, $interval, hub, ytPlayer) {
 
-    if (!hub.isConnected()) {
-        var loginPath = "/login";
-        if ($route.current.params.username) {
-            loginPath += "/" + $route.current.params.username;
-        }
-        $location.path(loginPath);
-        return;
-    }
 
-    $scope.hub = hub;
-    $scope.username = hub.getUsername();
+
+    $scope.isInited = false;
+    $scope.username = $route.current.params.username;
     $scope.tracks = [];
     $scope.users = [];
-
     $scope.currentTrack = {
         id: 0,
         time: 0,
         length: 0,
         imageUrl: 0
     };
-
     $scope.playerVolume = 100;
 
+    if (!$scope.username) {
+        $location.path("/login");
+        return;
+    }
+
+    hub.initAsync($scope.username).then(function() {
+        // Fetch initial data
+        hub.refreshAllData();
+
+        // check if $apply is required
+        $scope.isInited = true;        
+    });
+  
     ytPlayer.init("playerId").then(function () {
         $scope.player = ytPlayer;
 
         $(ytPlayer).on("stateChanged", function (e, state) {
-            $scope.currentTrack.time = state && state.time || 0;
-            $scope.currentTrack.length = state && state.length || 0;
-            $scope.$digest();
-
+            $scope.$apply(function() {
+                $scope.currentTrack.time = state && state.time || 0;
+                $scope.currentTrack.length = state && state.length || 0;
+            });
         });
 
         $scope.$on("$destroy", function () {
             $(ytPlayer).off("stateChanged");
+            ytPlayer.destroy();
         });
 
+        // !!! watch only after ytPlayer is inited,
+        // otherwise ytPlayer will fail to invoke setVolume()
         $scope.$watch("playerVolume", function () {
             ytPlayer.setVolume($scope.playerVolume);
         });
-
-        $scope.broadcastVolumeValue = function () {
-            onStateChanged();
-        };
     });
+
     
 
+    $scope.broadcastVolumeValue = function () {
+        onStateChanged();
+    };
+    
     function onStateChanged() {
-        //notify other clients
+        //notify other clients about player state update
         console.log($scope.playerState);
     }
     
-    // Define Client Callbacks
-    function onUserListUpdated(data) {
-        $scope.users = data;
-        $scope.$digest();
+    // Define Client Methods
+    hub.client.updateUserList = function (data) {
+        $scope.$apply(function() {
+            $scope.users = data;
+        });               
     }
+    hub.client.updatePlayList = function(data) {
+        $scope.$apply(function() {
+            $scope.tracks = data;
 
-    function onTrackListUpdated(data) {
-        $scope.tracks = data;
-        $scope.$digest();
-
-        if (data.length > 0 && $scope.tracks.length === 0)
-            playNext();        
-    }
-
-    //function onRemainingTimeUpdated(value) {
-    //    $scope.trackTime = value;
-    //    $scope.$digest();
-    //}
-
-    hub.setCallbacks({
-        updateUserList: onUserListUpdated,
-        updatePlaylist: onTrackListUpdated,
-        //updateRemainingTime: onRemainingTimeUpdated
-    });
-    // .Define Client Callbacks
-
-    // Fetch initial data
-    hub.getInitialDataAsync()
-        .done(function (data) {
-            onTrackListUpdated(data.Playlist);
-            onUserListUpdated(data.Users);
+            if (data.length > 0 && $scope.tracks.length === 0)
+                playNext();
         });
-
+    }    
+    // .Define Client Methods
 
     function playNext() {
         $scope.playerState.currentTrackId = $scope.tracks[0] && $scope.tracks[0].Id;
@@ -220,5 +210,10 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
     }
 
     $scope.moveNext = moveNext;
+
+
+
+
+    
 });
 

@@ -1,105 +1,94 @@
 ﻿'use strict';
 
-angular.module('services').factory('hub', function ($location) {
+angular.module('services').factory('hub', function ($location, $q) {
 
     var self = this,
+        initPromise = undefined,
         serverProxy = $.connection.trackListHub.server,
-        clientCallbacks = {};
+        clientProxy = $.connection.trackListHub.client;
 
-    self.isInited = false;
-    self.initPromise = undefined;
-    self.username = "anonymous";
-    self.users = [];
+    // list of supported methods
+    self.client = {
+        'updateUserList': null,
+        'updatePlayList': null
+    };
 
-    // subscribe for some events
+    // Subscribe for some SignalR events
     $.connection.hub.disconnected(function () {
         if ($.connection.hub.lastError) {
-            console.error("Disconnected. Reason: " + $.connection.hub.lastError.message);
+            console.error("SignalR disconnected. Reason: " + $.connection.hub.lastError.message);
         }
     });
 
     $.connection.hub.error(function (error) {
         console.log('SignalR error: ' + error);
+        alert("Error: " + error);
     });
+    // .Subscribe for some SignalR events
 
-    function isConnected() {
-        return self.isInited && self.username != "anonymous";
-    }
+    function initAsync(username) {
+        if (!initPromise) {
+            var deferred = $q.defer();
+            initPromise = deferred.promise;
 
-    function ensureConnection() {
-        if (isConnected())
-            return true;
-
-        $location.path("/login");
-        return false;
-    }
-
-    function invokeCallback(name, args) {
-        if (typeof clientCallbacks[name] === "function")
-            clientCallbacks[name].apply($.connection.trackListHub, $.makeArray(args));
-    }
-
-    // public methods
-    return {
-        setScope: function ($scope) {
-            self.$scope = $scope;
-        },
-        initAsync: function () {
-            $.connection.trackListHub.client.updateUserList = function () {
-                invokeCallback("updateUserList", arguments);
-            };
-            $.connection.trackListHub.client.updatePlaylist = function () {
-                invokeCallback("updatePlaylist", arguments);
-            };
-            $.connection.trackListHub.client.updateRemainingTime = function () {
-                invokeCallback("updateRemainingTime", arguments);
+            // Self-kickoff callback
+            // Server will invoke it to disconnect existing client with the same name as passed to login method
+            clientProxy.stop = function (kickerAddress) {
+                $.connection.hub.stop();
+                location.hash = "/kickout/" + kickerAddress;
             };
 
-            if (!self.isInited) {
-                self.initPromise = $.connection.hub.start();
-                self.initPromise.done(function () {
-                    self.isInited = true;
-                });
+            // In order to make client proxy valid for later use, all client's methods have to be defined before SignalR connection is started
+            // Here we create method wrappers for each supported client method (list is in self.client object defined above)
+            // Later consumer of hub service can define method logic by simply defining a function with corresponding name on a hub.client instance
+            var name;
+            for (name in self.client) {
+                clientProxy[name] = createClientCallback(name);
             }
-            return self.initPromise;
-        },
-        setUsername: function (username) {
-            var promise = serverProxy.setUsername(username);
-
-            promise.done(function (result) {
-                if (result === "OK") {
-                    self.username = username;
+            function createClientCallback(methodName) {
+                return function() {
+                    if (typeof self.client[methodName] === "function") {
+                        self.client[methodName].apply($.connection.trackListHub, $.makeArray(arguments));
+                    } else {
+                        console.warn("Server invoked '" + methodName + "' but consumer haven't defined a correspoding function on a hub service yet");
+                    }
                 }
-            });
+            }
 
-            return promise;
-        },
-        isConnected: isConnected,
-        getUsername: function () {
-            return self.username;
-        },
-        getInitialDataAsync: function () {
-            return serverProxy.getInitialData();
-        },
-        setCallbacks: function (callbacks) {
-            for (var key in callbacks) {
-                clientCallbacks[key] = callbacks[key];
-            }
-        },
-        sendUrl: function (url) {
-            if (ensureConnection()) {
-                serverProxy.enqueueTrack(self.username, url);
-            }            
-        },
-        moveNext: function () {
-            if (ensureConnection()) {
-                serverProxy.moveNext();
-            }
-        },
-        updateRemainingTime: function (value) {
-            if (ensureConnection()) {
-                serverProxy.updateRemainingTime(value);
-            }            
+            // negotiage and establish connection with server
+            $.connection.hub.start()
+                .done(function () {
+                    console.log('SignalR is now connected (connection ID=' + $.connection.hub.id + ')');
+
+                    serverProxy.login(username)
+                        .done(function () {
+                            self.username = username;
+                            deferred.resolve('User "' + username + '" has SUCCESSFULLY loged in');
+                            console.log('User "' + username + '" has SUCCESSFULLY loged in');
+                        })
+                        .fail(function () {
+                            deferred.reject('User "' + username + '" FAILED to log in');
+                        });
+                })
+                .fail(function () {
+                    console.log('SignalR could not connect to the server!');
+                    deferred.reject('SignalR could not connect to the server');
+                });
+        }
+
+        return initPromise;
+    }
+
+    // expose public methods
+    self.initAsync = initAsync;
+
+    // add methods of serverProxy
+    var serverMethodName;
+    for (serverMethodName in serverProxy) {
+        if (serverProxy.hasOwnProperty(serverMethodName)) {
+            self[serverMethodName] = serverProxy[serverMethodName];
         }
     }
+    
+    return self;    
 });

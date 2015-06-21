@@ -152,14 +152,18 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SignalR\CamelCaseContractResolver.cs" />
+    <Compile Include="SignalR\UserInfo.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="SignalR\TrackListHub.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="app\controllers\kickerCtrl.js" />
     <Content Include="app\controllers\loginCtrl.js" />
     <Content Include="app\services\ytPlayer.js" />
     <Content Include="app\services\hub.js" />
     <Content Include="app\controllers\homeCtrl.js" />
+    <Content Include="app\views\kicker.html" />
     <Content Include="app\views\login.html" />
     <Content Include="Content\bootstrap-slider.css" />
     <Content Include="Content\bootstrap-theme.css" />

@@ -17,128 +17,131 @@
     }
 </style>
 
-<div class="row" style="padding-top: 30px;">
-    <div class="col-md-4">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                Current track
-            </div>
-            <div class="panel-body">
-                <div>
-                    <img ng-src="{{currentTrack.imageUrl}}" width="100%" />
-                </div>
-            </div>
-            <div class="panel-footer" style="font-size: 12px;">
-                <div>
-                    <table style="width: 100%" class="player-controls">
-                        <tr >
-                            <td class="play-pause">
-                                <button ng-click="player.playPause()">
-                                    <i class="fa fa-play" ng-hide="player.isPlaying()"></i>
-                                    <i class="fa fa-pause" ng-show="player.isPlaying()"></i>
-                                </button>
-                            </td>
-                            <td class="time-slider">
-                                <slider ng-model="currentTrack.time" min="0" step="1" max="currentTrack.length" tooltip="hide" on-stop-slide="broadcastVolumeValue" style="width: 100%;" ng-disabled="true" handle="triangle"></slider>
-                            </td>
-                            <td class="volume-slider">
-                                <i class="fa fa-volume-up" style="font-size: 150%;"></i>
-                                <slider ng-model="playerVolume" min="0" step="5" max="100" on-stop-slide="broadcastVolumeValue" style="width: 60px; float: right;"></slider>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                <div>
-                    <span style="font-weight: bold; font-style: italic;">Title:</span>
-                    <span style="">{{currentTrack.Info.Title}}</span>
-                </div>
-                <div>
-                    <span style="font-weight: bold; font-style: italic;">Time remaining:</span>
-                    <span style="">{{trackTime}}</span>
-                </div>
-                <div>
-                    {{currentTrack | json}}
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <span>Playlist</span>
-                <form class="pull-right form-inline" ng-submit="addUrl()" name="addTrackForm" style="margin-top: -7px; margin-right: -12px;">
-                    <div class="form-group">
-                        <input type="url" class="form-control" placeholder="youtube url" required ng-model="newTrackUrl">
-                    </div>
-                    <button type="submit" class="btn btn-default">Add</button>
-                </form>
-            </div>
-            <div class="panel-body">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th style="width: 60px;">
-                                #
-                            </th>
-                            <th style="width: 90px;">
-                                Added By
-                            </th>
-                            <th>
-                                Title
-                            </th>
-                            <th style="width: 90px;">
-                                Duration
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr ng-repeat="track in tracks">
-                            <td ng-click="playPauseTrack(track)">
-                                <span ng-show="track.Id != currentTrack.id">
-                                    {{$index + 1}}
-                                </span>
-                                <span ng-show="track.Id == currentTrack.id">
-                                    <i class="fa fa-play" ng-hide="player.isPlaying()"></i>
-                                    <i class="fa fa-pause" ng-show="player.isPlaying()"></i>
-                                </span>
-                            </td>
-                            <td>
-                                {{track.AddedBy}}
-                            </td>
-                            <td>
-                                {{track.Info.Title}}
-                            </td>
-                            <td>
-                                {{track.Info.Duration}}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+<div class="ng-cloak" ng-show="isInited">
 
+    <div class="row" style="padding-top: 30px;">
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Current track
+                </div>
+                <div class="panel-body">
+                    <div>
+                        <img ng-src="{{currentTrack.imageUrl}}" width="100%" />
+                    </div>
+                </div>
+                <div class="panel-footer" style="font-size: 12px;">
+                    <div>
+                        <table style="width: 100%" class="player-controls">
+                            <tr>
+                                <td class="play-pause">
+                                    <button ng-click="player.playPause()">
+                                        <i class="fa fa-play" ng-hide="player.isPlaying()"></i>
+                                        <i class="fa fa-pause" ng-show="player.isPlaying()"></i>
+                                    </button>
+                                </td>
+                                <td class="time-slider">
+                                    <slider ng-model="currentTrack.time" min="0" step="1" max="currentTrack.length" tooltip="hide" on-stop-slide="broadcastVolumeValue" style="width: 100%;" ng-disabled="true" handle="triangle"></slider>
+                                </td>
+                                <td class="volume-slider">
+                                    <i class="fa fa-volume-up" style="font-size: 150%;"></i>
+                                    <slider ng-model="playerVolume" min="0" step="5" max="100" on-stop-slide="broadcastVolumeValue" style="width: 60px; float: right;"></slider>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div>
+                        <span style="font-weight: bold; font-style: italic;">Title:</span>
+                        <span style="">{{currentTrack.Info.Title}}</span>
+                    </div>
+                    <div>
+                        <span style="font-weight: bold; font-style: italic;">Time remaining:</span>
+                        <span style="">{{trackTime}}</span>
+                    </div>
+                    <div>
+                        {{currentTrack | json}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <span>Playlist</span>
+                    <form class="pull-right form-inline" ng-submit="addUrl()" name="addTrackForm" style="margin-top: -7px; margin-right: -12px;">
+                        <div class="form-group">
+                            <input type="url" class="form-control" placeholder="youtube url" required ng-model="newTrackUrl">
+                        </div>
+                        <button type="submit" class="btn btn-default">Add</button>
+                    </form>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">
+                                    #
+                                </th>
+                                <th style="width: 90px;">
+                                    Added By
+                                </th>
+                                <th>
+                                    Title
+                                </th>
+                                <th style="width: 90px;">
+                                    Duration
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="track in tracks">
+                                <td ng-click="playPauseTrack(track)">
+                                    <span ng-show="track.Id != currentTrack.id">
+                                        {{$index + 1}}
+                                    </span>
+                                    <span ng-show="track.Id == currentTrack.id">
+                                        <i class="fa fa-play" ng-hide="player.isPlaying()"></i>
+                                        <i class="fa fa-pause" ng-show="player.isPlaying()"></i>
+                                    </span>
+                                </td>
+                                <td>
+                                    {{track.AddedBy}}
+                                </td>
+                                <td>
+                                    {{track.Info.Title}}
+                                </td>
+                                <td>
+                                    {{track.Info.Duration}}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Users
+                </div>
+                <div class="panel-body">
+                    <ul style="list-style-type: none; padding: 0;">
+                        <li ng-repeat="user in users">
+                            <i class="fa fa-user"></i>
+                            <span ng-class="{'curUser': user === username}">{{user}}</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                Users
-            </div>
-            <div class="panel-body">
-                <ul style="list-style-type: none; padding: 0;">
-                    <li ng-repeat="user in users">
-                        <i class="fa fa-user"></i>
-                        <span ng-class="{'curUser': user === username}">{{user}}</span>
-                    </li>
-                </ul>
-            </div>
+    <div ng-show="username == 'oleksiy'" class="col-md-12">
+        <div>
+            <button ng-click="prefill()">
+                Prefill
+            </button>
         </div>
+        <div id="playerId"></div>
     </div>
-</div>
-<div ng-show="username == 'oleksiy'" class="col-md-12">
-    <div>
-        <button ng-click="prefill()">
-            Prefill
-        </button>
-    </div>
-    <div id="playerId"></div>
 </div>
