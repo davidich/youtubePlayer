@@ -1,6 +1,13 @@
-﻿namespace YoutubeHelpers
+﻿using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Security.Policy;
+using System.Web;
+
+namespace YoutubeHelpers
 {
     using System;
+    using System.Linq;
+    using System.Text;
     using System.Text.RegularExpressions;
     using System.Xml;
 
@@ -8,7 +15,7 @@
     using Google.Apis.YouTube.v3;
     using Google.Apis.YouTube.v3.Data;
 
-    public class VideoHelper        
+    public class VideoHelper
     {
         private readonly Lazy<YouTubeService> _service;
 
@@ -27,56 +34,97 @@
             _service = new Lazy<YouTubeService>(() => CreateService(apiKey));
         }
 
-        public static VideoInfo GetInfo(string url, string apiKey)
+        public List<VideoInfo> GetVideoInfos(string url)
         {
-            var helper = new VideoHelper(apiKey);
-            return helper.GetInfo(url);
-        }
+            var parseResult = UrlParser.Parse(url);
 
-        public VideoInfo GetInfo(string videoId)
-        {
-            var request = _service.Value.Videos.List("contentDetails,snippet");
-            request.Id = videoId;
-            request.Fields = "items(contentDetails/duration,snippet(title, thumbnails/high/url))";
-
-            var response = request.Execute();
-
-            if (response.Items.Count != 1)
+            if (parseResult.Type == UrlParser.UrlType.SingleVideo)
             {
-                var message = string.Format(
-                    "'{0}' is not valid videoId as response can't be retreived (ItemCount = {1}",
-                    videoId,
-                    response.Items.Count);
-                throw new ArgumentException(message);
+                var videoInfo = GetVideoInfo(parseResult.Id);
+                videoInfo.StartTime = parseResult.StartTime;
+                return new List<VideoInfo> { videoInfo };
             }
-            Video video = response.Items[0];
-
-            return new VideoInfo
-                   {
-                       AdFreeUrl = CreateAdFreeUrl(videoId),
-                       Duration = XmlConvert.ToTimeSpan(video.ContentDetails.Duration),
-                       Title = video.Snippet.Title,
-                       ImageUrl = video.Snippet.Thumbnails.High.Url
-                   };
-
+            //else if (parseResult.Type == UrlParser.UrlType.Playlist)
+            //{
+            var videoIds = GetPlaylistVideoIds(parseResult.Id);
+            return GetVideoInfos(videoIds);
+            //}
         }
 
-        public string CreateAdFreeUrl(string videoId)
+        private VideoInfo GetVideoInfo(string videoId)
         {
-            return string.Format("http://www.fleetube.com/watch?v={0}", videoId);
+            var videoIds = new List<string> { videoId };
+            return GetVideoInfos(videoIds).Single();
         }
 
-        public string ParseVideoId(string url)
+        private List<VideoInfo> GetVideoInfos(IEnumerable<string> videoIds)
         {
-            var regex = new Regex(@"www\.youtube\.com\/watch\?.*v=([\w-]{11})");
-            var result = regex.Match(url);
+            var videoInfos = new List<VideoInfo>();
 
-            if (result.Groups.Count != 2)
-                throw new ArgumentException("Only Youtube Urls are supported.");
+            var idQueue = new Queue<string>(videoIds);
+            while (idQueue.Count > 0)
+            {
+                // build Id param to contain all required Ids
+                int batchSize = 50;
+                var idRequestParam = new StringBuilder();
+                while (batchSize>0 && idQueue.Count > 0)
+                {
+                    if (idRequestParam.Length > 0)
+                        idRequestParam.Append(',');
 
-            return result.Groups[1].Value;
+                    idRequestParam.Append(idQueue.Dequeue());
+                    batchSize--;
+                }
 
+                // prepare request
+                var request = _service.Value.Videos.List("contentDetails,snippet");
+                request.Id = idRequestParam.ToString();
+                request.Fields = "items(id,contentDetails/duration,snippet(title, thumbnails/high/url))";
+                
+                // execute request
+                var response = request.Execute();
 
+                foreach (var video in response.Items)
+                {
+                    var videoInfo = new VideoInfo
+                    {
+                        Id = video.Id,
+                        Title = video.Snippet.Title,
+                        ImageUrl = video.Snippet.Thumbnails.High.Url,
+                        TotalSeconds = (int)XmlConvert.ToTimeSpan(video.ContentDetails.Duration).TotalSeconds,
+                    };
+
+                    videoInfos.Add(videoInfo);
+                }               
+            }
+
+            return videoInfos;
+        }
+
+        private IEnumerable<string> GetPlaylistVideoIds(string playlistId)
+        {
+            var videoIds = new List<string>();
+
+            var nextPageToken = "";
+            while (nextPageToken != null)
+            {
+                var request = _service.Value.PlaylistItems.List("snippet");
+                request.PlaylistId = playlistId;
+                request.MaxResults = 50;
+                request.PageToken = nextPageToken;
+
+                var response = request.Execute();
+
+                foreach (var playlistItem in response.Items)
+                {
+                    var videoId = playlistItem.Snippet.ResourceId.VideoId;
+                    videoIds.Add(videoId);
+                }
+
+                nextPageToken = response.NextPageToken;
+            }
+
+            return videoIds;
         }
 
         private static YouTubeService CreateService(string apiKey, string applicationName = null)
@@ -91,6 +139,17 @@
         }
 
 
+        public int ParseVideoStartTime(string url)
+        {
+            Uri uri = new Uri(url);
+
+            var startTimeString = HttpUtility.ParseQueryString(uri.Query)["t"];
+
+            int startTime;
+            return string.IsNullOrWhiteSpace(startTimeString) || !int.TryParse(startTimeString, out startTime)
+                ? 0
+                : startTime;
+        }
     }
 
 }

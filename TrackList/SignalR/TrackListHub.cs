@@ -53,31 +53,31 @@
             Clients.Caller.updateVolume(playerVolume);
         }
 
-        public VideoInfo AddUrl(string clientName, string url)
+        public List<VideoInfo> AddUrl(string clientName, string url)
         {
-            var videoId = YoutubeVideoHelper.ParseVideoId(url);
+            var videoInfos = YoutubeVideoHelper.GetVideoInfos(url);
 
-            VideoInfo videoInfo;
             lock (Playlist)
             {
-                if (Playlist.Any(item => item.Id == videoId))
-                    throw new InvalidOperationException("Track is already in the list");
+                foreach (var videoInfo in videoInfos)
+                {
+                    if (Playlist.Any(item => item.Id == videoInfo.Id))
+                        continue;
 
-                videoInfo = YoutubeVideoHelper.GetInfo(videoId);
+                    var playlistItem = new PlaylistItem
+                                       {
+                                           Id = videoInfo.Id,
+                                           Info = videoInfo,
+                                           AddedBy = clientName
+                                       };
 
-                var playlistItem = new PlaylistItem
-                                   {
-                                       Id = videoId,
-                                       Info = videoInfo,
-                                       AddedBy = clientName
-                                   };
-
-                Playlist.Add(playlistItem);
+                    Playlist.Add(playlistItem);
+                }
             }
 
             Clients.All.updatePlayList(Playlist);
 
-            return videoInfo;
+            return videoInfos;
         }
 
         public void RemoveTrack(string clientName, string id)

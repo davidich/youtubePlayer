@@ -156,7 +156,7 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
         toaster.success("[" + removerName + "] removed track", title);
 
         if (hub.isMain()) {
-            if (track.id === $scope.currentTrack.id)
+            if (track.id === $scope.playerState.trackId)
                 playNext();
         }
     }
@@ -257,7 +257,9 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
         }
 
         // play & notify
-        youtubeApi.loadAndPlay(id);
+        var track = getTrackById(id);
+        var startTime = track.info.startTime;
+        youtubeApi.loadAndPlay(id, startTime);
         notifyAboutPlayerStateUpdate({
             trackId: id
         });
