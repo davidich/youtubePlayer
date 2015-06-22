@@ -1,5 +1,6 @@
 ﻿<style>
-    .play-pause {
+    .play-pause,
+    .play-next {
         width: 25px;
     }
 
@@ -15,6 +16,37 @@
         font-weight: bold;
         text-decoration: underline;
     }
+
+    .delete-track-button {
+        cursor: pointer;
+        display: none;
+    }
+
+    tr:hover .delete-track-button {
+        display: inline-block;
+    }
+
+    .track-number {
+        display: inline;
+    }
+
+    .play-track-button {
+        display: none;
+    }
+
+    tr:hover .track-number {
+        display: none;
+    }
+
+    tr:hover .play-track-button {
+        display: inline;
+    }
+
+    .clip-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 </style>
 
 <div class="ng-cloak" ng-show="isInited">
@@ -23,11 +55,13 @@
         <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    Current track
+                    <div class="clip-text"style="min-height: 20px;">
+                        {{playerState.title()}}
+                    </div>
                 </div>
                 <div class="panel-body">
                     <div>
-                        <img ng-src="{{currentTrack.imageUrl}}" width="100%" />
+                        <img ng-src="{{playerState.imageUrl()}}" width="100%" />
                     </div>
                 </div>
                 <div class="panel-footer" style="font-size: 12px;">
@@ -35,32 +69,26 @@
                         <table style="width: 100%" class="player-controls">
                             <tr>
                                 <td class="play-pause">
-                                    <button ng-click="player.playPause()">
-                                        <i class="fa fa-play" ng-hide="player.isPlaying()"></i>
-                                        <i class="fa fa-pause" ng-show="player.isPlaying()"></i>
+                                    <button ng-click="requestPlayPause()">
+                                        <i class="fa fa-play" ng-show="playerState.mode !== 'PLAYING'"></i>
+                                        <i class="fa fa-pause" ng-show="playerState.mode === 'PLAYING'"></i>
+                                    </button>
+                                </td>
+                                <td class="play-next">
+                                    <button ng-click="requestPlayNext()">
+                                        <i class="fa fa-fast-forward"></i>
                                     </button>
                                 </td>
                                 <td class="time-slider">
-                                    <slider ng-model="currentTrack.time" min="0" step="1" max="currentTrack.length" tooltip="hide" on-stop-slide="broadcastVolumeValue" style="width: 100%;" ng-disabled="true" handle="triangle"></slider>
+                                    <slider ng-model="playerState.time" min="0" step="1" max="playerState.length" tooltip="hide" on-stop-slide="requestVolumeUpdate" style="width: 100%;" ng-disabled="true" handle="triangle"></slider>
                                 </td>
                                 <td class="volume-slider">
                                     <i class="fa fa-volume-up" style="font-size: 150%;"></i>
-                                    <slider ng-model="playerVolume" min="0" step="5" max="100" on-stop-slide="broadcastVolumeValue" style="width: 60px; float: right;"></slider>
+                                    <slider ng-model="playerVolume" min="0" step="5" max="100" on-stop-slide="requestVolumeUpdate" style="width: 60px; float: right;"></slider>
                                 </td>
                             </tr>
                         </table>
-                    </div>
-                    <div>
-                        <span style="font-weight: bold; font-style: italic;">Title:</span>
-                        <span style="">{{currentTrack.Info.Title}}</span>
-                    </div>
-                    <div>
-                        <span style="font-weight: bold; font-style: italic;">Time remaining:</span>
-                        <span style="">{{trackTime}}</span>
-                    </div>
-                    <div>
-                        {{currentTrack | json}}
-                    </div>
+                    </div>                    
                 </div>
             </div>
         </div>
@@ -68,7 +96,7 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <span>Playlist</span>
-                    <form class="pull-right form-inline" ng-submit="addUrl()" name="addTrackForm" style="margin-top: -7px; margin-right: -12px;">
+                    <form class="pull-right form-inline" ng-submit="addUrl()" name="addTrackForm" style="margin-top: -7px; margin-right: -12px;" novalidate="">
                         <div class="form-group">
                             <input type="url" class="form-control" placeholder="youtube url" required ng-model="newTrackUrl">
                         </div>
@@ -91,27 +119,38 @@
                                 <th style="width: 90px;">
                                     Duration
                                 </th>
+                                <th style="width: 50px;">
+
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr ng-repeat="track in tracks">
-                                <td ng-click="playPauseTrack(track)">
-                                    <span ng-show="track.Id != currentTrack.id">
+                                <td>
+                                    <span class="track-number" ng-show="track.id !=  playerState.trackId">
                                         {{$index + 1}}
                                     </span>
-                                    <span ng-show="track.Id == currentTrack.id">
-                                        <i class="fa fa-play" ng-hide="player.isPlaying()"></i>
-                                        <i class="fa fa-pause" ng-show="player.isPlaying()"></i>
+                                    <span ng-show="track.id == playerState.trackId" ng-click="requestPlayPause(track.id)">
+                                        <i class="fa fa-play" ng-show="playerState.mode !== 'PLAYING'"></i>
+                                        <i class="fa fa-pause" ng-show="playerState.mode === 'PLAYING'"></i>
+                                    </span>
+                                    <span class="play-track-button" ng-show="track.id != playerState.trackId" ng-click="requestPlayPause(track.id)">
+                                        <i class="fa fa-play"></i>
                                     </span>
                                 </td>
                                 <td>
-                                    {{track.AddedBy}}
+                                    {{track.addedBy}}
                                 </td>
                                 <td>
-                                    {{track.Info.Title}}
+                                    {{track.info.title}}
                                 </td>
                                 <td>
-                                    {{track.Info.Duration}}
+                                    {{track.info.totalSeconds | duration }}
+                                </td>
+                                <td>
+                                    <i class="fa fa-trash delete-track-button" ng-click="requestTrackRemoval(track)" ng-hide="track.isRemoved">
+                                    </i>
+                                    <i class="fa fa-spinner fa-spin" ng-show="track.isRemoved"></i>
                                 </td>
                             </tr>
                         </tbody>
@@ -141,6 +180,9 @@
             <button ng-click="prefill()">
                 Prefill
             </button>
+            <div style="display: inline-block">
+                {{trackCounters | json}}
+            </div>
         </div>
         <div id="playerId"></div>
     </div>

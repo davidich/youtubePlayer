@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-angular.module('controllers').controller('LoginCtrl', function ($scope, $route, $location, hub) {
+angular.module('controllers').controller('LoginCtrl', function ($scope, $route, $location, hub, toaster) {
 
     $scope.username = $route.current.params.username;
 

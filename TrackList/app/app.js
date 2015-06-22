@@ -10,7 +10,7 @@ angular.module('services', []);
 angular.module('controllers', ['services']);
 
 // App module setup
-angular.module('app', ['ngRoute', 'ui.bootstrap-slider', 'controllers', 'services', 'directives']);
+angular.module('app', ['ngRoute', 'ngAnimate', 'ui.bootstrap-slider', 'toaster', 'controllers', 'services', 'directives']);
 angular.module('app').config([
     '$routeProvider',
     function ($routeProvider) {

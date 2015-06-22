@@ -10,7 +10,12 @@ angular.module('services').factory('hub', function ($location, $q) {
     // list of supported methods
     self.client = {
         'updateUserList': null,
-        'updatePlayList': null
+        'updatePlayList': null,
+        'notifyAboutRemoval': null,
+        'updatePlayerState': null,
+        'requestPlayPause': null,
+        'requestPlayNext': null,
+        'updateVolume': null
     };
 
     // Subscribe for some SignalR events
@@ -79,16 +84,64 @@ angular.module('services').factory('hub', function ($location, $q) {
         return initPromise;
     }
 
+    function addUrlAsync(url) {
+        var deferred = $q.defer();
+
+        serverProxy.addUrl(self.username, url)
+            .done(function(result) {
+                deferred.resolve(result);
+            })
+            .fail(function(error) {
+                deferred.reject(error.message);
+            });
+
+
+        return deferred.promise;        
+    }
+
+    function removeTrackAsync(id) {
+        var deferred = $q.defer();
+
+        serverProxy.removeTrack(self.username, id)
+            .done(function (result) {
+                deferred.resolve(result);
+            })
+            .fail(function (error) {
+                deferred.reject(error.message);
+            });
+
+
+        return deferred.promise;
+    }
+
     // expose public methods
     self.initAsync = initAsync;
 
+    self.triggerDataUpdate = serverProxy.triggerDataUpdate;
+
+    self.notifyAboutPlayerStateUpdate = serverProxy.notifyAboutPlayerStateUpdate;
+
+    self.requestPlayPause = serverProxy.requestPlayPause;
+
+    self.requestPlayNext = serverProxy.requestPlayNext;
+
+    self.requestVolumeUpdate = serverProxy.requestVolumeUpdate;
+
+    self.addUrlAsync = addUrlAsync;
+
+    self.removeTrackAsync = removeTrackAsync;
+
+    self.isMain = function() { return self.username === "oleksiy"; }
+
     // add methods of serverProxy
-    var serverMethodName;
-    for (serverMethodName in serverProxy) {
-        if (serverProxy.hasOwnProperty(serverMethodName)) {
-            self[serverMethodName] = serverProxy[serverMethodName];
-        }
-    }
+    //var serverMethodName;
+    //for (serverMethodName in serverProxy) {
+    //    if (serverProxy.hasOwnProperty(serverMethodName)) {
+    //        self[serverMethodName] = serverProxy[serverMethodName];
+    //    }
+    //}
+
+
     
     return self;    
 });

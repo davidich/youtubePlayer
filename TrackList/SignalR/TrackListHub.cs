@@ -1,6 +1,8 @@
 ﻿namespace TrackList.SignalR
 {
+    using System;
     using System.Collections.Concurrent;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
     using System.Web;
@@ -11,10 +13,12 @@
 
     public class TrackListHub : Hub
     {
+        private static object playerState = null;
+        private static int playerVolume = 100;
+
         private const string YoutubeApiKey = "AIzaSyDbHCpfIGGlFFgqmJZapJ9ssQfk6i13jeE";
         private static readonly VideoHelper YoutubeVideoHelper = new VideoHelper(YoutubeApiKey);
-        private static readonly ConcurrentQueue<PlaylistItem> Playlist = new ConcurrentQueue<PlaylistItem>();
-
+        private static readonly List<PlaylistItem> Playlist = new List<PlaylistItem>();
         private static readonly ConcurrentDictionary<string, UserInfo> Connections = new ConcurrentDictionary<string, UserInfo>();
 
         public void Login(string username)
@@ -32,7 +36,7 @@
                 ConnectionId = Context.ConnectionId,
                 IpAddress = clientIp
             };
-            
+
             Connections.AddOrUpdate(
                 username,
                 userInfo,
@@ -41,31 +45,26 @@
             Clients.All.updateUserList(GetUsers());
         }
 
-        public void RefreshAllData()
+        public void TriggerDataUpdate()
         {
             Clients.Caller.updateUserList(GetUsers());
             Clients.Caller.updatePlayList(Playlist);
+            Clients.Caller.updatePlayerState(playerState);
+            Clients.Caller.updateVolume(playerVolume);
         }
 
-
-
-
-
-
-        
-
-
-
-        public void EnqueueTrack(string clientName, string url)
+        public VideoInfo AddUrl(string clientName, string url)
         {
-            try
+            var videoId = YoutubeVideoHelper.ParseVideoId(url);
+
+            VideoInfo videoInfo;
+            lock (Playlist)
             {
-                var videoId = YoutubeVideoHelper.ParseVideoId(url);
+                if (Playlist.Any(item => item.Id == videoId))
+                    throw new InvalidOperationException("Track is already in the list");
 
-                //if (Playlist.Any(i => i.Id == videoId))
-                //    return;
+                videoInfo = YoutubeVideoHelper.GetInfo(videoId);
 
-                var videoInfo = YoutubeVideoHelper.GetInfo(videoId);
                 var playlistItem = new PlaylistItem
                                    {
                                        Id = videoId,
@@ -73,41 +72,54 @@
                                        AddedBy = clientName
                                    };
 
-                Playlist.Enqueue(playlistItem);
-
-                Clients.All.updatePlayList(Playlist);
+                Playlist.Add(playlistItem);
             }
-            catch
-            {
 
-            }
+            Clients.All.updatePlayList(Playlist);
+
+            return videoInfo;
         }
 
-        public void MoveNext()
+        public void RemoveTrack(string clientName, string id)
         {
-            try
+            PlaylistItem removedItem;
+            lock (Playlist)
             {
-                PlaylistItem item;
-                Playlist.TryDequeue(out item);
-                Clients.Others.updatePlaylist(Playlist);
-            }
-            catch
-            {
+                var index = Playlist.FindIndex(item => item.Id == id);
 
+                if (index == -1)
+                    throw new InvalidOperationException("Track doesn't exist");
+
+                removedItem = Playlist[index];
+                Playlist.RemoveAt(index);
             }
+
+            Clients.All.updatePlayList(Playlist);
+            Clients.All.notifyAboutRemoval(clientName, removedItem);
         }
 
-        public void UpdateRemainingTime(string value)
+        public void NotifyAboutPlayerStateUpdate(object state)
         {
-            try
-            {
-                Clients.Others.updateRemainingTime(value);
-            }
-            catch
-            {
-
-            }
+            playerState = state;
+            Clients.All.updatePlayerState(state);
         }
+
+        public void RequestPlayPause(string id)
+        {
+            Clients.All.requestPlayPause(id);
+        }
+
+        public void RequestPlayNext()
+        {
+            Clients.All.requestPlayNext();
+        }
+
+        public void RequestVolumeUpdate(int value)
+        {
+            playerVolume = value;
+            Clients.All.updateVolume(value);
+        }
+
 
         public override Task OnDisconnected(bool stopCalled)
         {
@@ -142,7 +154,7 @@
                 return ipAddress as string;
             }
             return null;
-        } 
+        }
         #endregion
     }
 }

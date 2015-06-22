@@ -10,38 +10,10 @@
     @Styles.Render("~/Content/css")
 </head>
     <body>
-        @*<div>
-            <input type="text" id="message" />
-            <input type="button" id="sendmessage" value="Send" />
-            <input type="hidden" id="displayname" />
-            <ul id="discussion"></ul>
-        </div>*@
-        @*<div class="navbar navbar-inverse navbar-fixed-top">
-            <div class="container">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    @Html.ActionLink("Application name", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
-                </div>
-                <div class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav">
-                        <li>@Html.ActionLink("Home", "Index", "Home", new { area = "" }, null)</li>
-                        <li>@Html.ActionLink("API", "Index", "Help", new { area = "HelpPage" }, null)</li>
-                    </ul>
-                    @Html.Partial("_LoginPartial")
-                </div>
-            </div>
-        </div>*@
+        <toaster-container></toaster-container>
         <div class="container body-content">
             @RenderBody()
-            @RenderSection("SPAViews", required: false)
-            <hr />
-            @*<footer>
-                <p>&copy; @DateTime.Now.Year - written by david_off</p>
-            </footer>*@
+            @RenderSection("SPAViews", required: false)            
         </div>
 
         @Scripts.Render("~/bundles/jquery")

@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-angular.module('services').factory('ytPlayer', function ($window, $document, $q) {
+angular.module('services').factory('youtubeApi', function ($window, $document, $q) {
     var self = this,
         isInited = false,
         player,
@@ -72,6 +72,10 @@ angular.module('services').factory('ytPlayer', function ($window, $document, $q)
         else if (prevMode != state.mode) {
             onStateChanged("mode");
         }
+
+        if (event.data == YT.PlayerState.ENDED) {
+            $(self).trigger("trackEnded");
+        }
     }
 
     function onStateChanged(reason) {
@@ -109,8 +113,12 @@ angular.module('services').factory('ytPlayer', function ($window, $document, $q)
         }
     }
 
+    self.stop = function () {
+        player.stopVideo();        
+    }
+
     self.setVolume = function (value) {
-        var parsedValue = parseInt(value);
+        var parsedValue = parseInt(value) || 100;
         if (parsedValue < 0) parsedValue = 0;
         if (parsedValue > 100) parsedValue = 100;
 

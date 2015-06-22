@@ -8,12 +8,7 @@ namespace TrackList
         public static void RegisterBundles(BundleCollection bundles)
         {
             bundles.Add(new ScriptBundle("~/bundles/jquery").Include(
-                "~/Scripts/jquery-{version}.js",
-                "~/Scripts/bootstrap-slider.js"));
-
-            bundles.Add(new ScriptBundle("~/bundles/jqueryval").Include(
-                "~/Scripts/jquery.unobtrusive*",
-                "~/Scripts/jquery.validate*"));
+                "~/Scripts/jquery-{version}.js"));
 
             bundles.Add(new ScriptBundle("~/bundles/bootstrap").Include(
                 "~/Scripts/bootstrap.js",
@@ -21,8 +16,11 @@ namespace TrackList
 
             bundles.Add(new ScriptBundle("~/bundles/angular").Include(
                 "~/Scripts/angular.js",
-                "~/Scripts/angular-bootstrap-slider.js",
-                "~/Scripts/angular-route.js"));
+                "~/Scripts/angular-route.js",
+                "~/Scripts/angular-animate.js",
+                "~/plugins/angular-bootstrap-slider/bootstrap-slider.js",
+                "~/plugins/angular-bootstrap-slider/angular-bootstrap-slider.js",
+                "~/plugins/angular-toaster/toaster.js"));
 
             bundles.Add(new ScriptBundle("~/bundles/app").Include(
                 "~/app/app.js",
@@ -33,7 +31,8 @@ namespace TrackList
             bundles.Add(new StyleBundle("~/Content/css").Include(
                  "~/Content/bootstrap.css",
                  "~/Scripts/angular-csp.css",
-                 "~/Content/bootstrap-slider.css"));
+                 "~/plugins/angular-bootstrap-slider/bootstrap-slider.css",
+                 "~/plugins/angular-toaster/toaster.css"));
         }
     }
 }
