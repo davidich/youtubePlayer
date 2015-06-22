@@ -87,6 +87,14 @@
                                     <slider ng-model="playerVolume" min="0" step="5" max="100" on-stop-slide="requestVolumeUpdate" style="width: 60px; float: right;"></slider>
                                 </td>
                             </tr>
+                            <tr>
+                                <td colspan="2">
+
+                                </td>
+                                <td colspan="2">
+                                    {{playerState.time | duration}}
+                                </td>
+                            </tr>
                         </table>
                     </div>                    
                 </div>
@@ -130,11 +138,11 @@
                                     <span class="track-number" ng-show="track.id !=  playerState.trackId">
                                         {{$index + 1}}
                                     </span>
-                                    <span ng-show="track.id == playerState.trackId" ng-click="requestPlayPause(track.id)">
+                                    <span ng-show="track.id == playerState.trackId" ng-click="requestPlayPause(track.id)" style="cursor: pointer">
                                         <i class="fa fa-play" ng-show="playerState.mode !== 'PLAYING'"></i>
                                         <i class="fa fa-pause" ng-show="playerState.mode === 'PLAYING'"></i>
                                     </span>
-                                    <span class="play-track-button" ng-show="track.id != playerState.trackId" ng-click="requestPlayPause(track.id)">
+                                    <span class="play-track-button" ng-show="track.id != playerState.trackId" ng-click="requestPlayPause(track.id)" style="cursor: pointer">
                                         <i class="fa fa-play"></i>
                                     </span>
                                 </td>
