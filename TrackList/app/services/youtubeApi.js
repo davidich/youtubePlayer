@@ -118,10 +118,11 @@ angular.module('services').factory('youtubeApi', function ($window, $document, $
     }
 
     self.setVolume = function (value) {
-        var parsedValue = parseInt(value) || 100;
-        if (parsedValue < 0) parsedValue = 0;
-        if (parsedValue > 100) parsedValue = 100;
+        var parsedValue = parseInt(value);
 
+        if (parsedValue < 0) parsedValue = 0;
+        if (parsedValue > 100 || isNaN(parsedValue)) parsedValue = 100;
+            
         player.setVolume(parsedValue);                    
     },
 

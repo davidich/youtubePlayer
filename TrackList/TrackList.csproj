@@ -990,7 +990,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="app\directives\" />
     <Folder Include="App_Data\" />
   </ItemGroup>
   <ItemGroup>

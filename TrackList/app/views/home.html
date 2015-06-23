@@ -83,7 +83,9 @@
                                     <slider ng-model="playerState.time" min="0" step="1" max="playerState.length" tooltip="hide" on-stop-slide="requestVolumeUpdate" style="width: 100%;" ng-disabled="true" handle="triangle"></slider>
                                 </td>
                                 <td class="volume-slider">
-                                    <i class="fa fa-volume-up" style="font-size: 150%;"></i>
+                                    <i class="fa fa-volume-up" style="font-size: 150%;" ng-show="playerVolume > 55"></i>
+                                    <i class="fa fa-volume-down" style="font-size: 150%;" ng-show="playerVolume > 0 && playerVolume <= 55" ></i>
+                                    <i class="fa fa-volume-off" style="font-size: 150%;" ng-show="playerVolume === 0"></i>
                                     <slider ng-model="playerVolume" min="0" step="5" max="100" on-stop-slide="requestVolumeUpdate" style="width: 60px; float: right;"></slider>
                                 </td>
                             </tr>
