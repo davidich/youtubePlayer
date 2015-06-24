@@ -1,16 +1,61 @@
 ﻿<style>
-    .play-pause,
-    .play-next {
-        width: 25px;
+    .time-slider .slider-selection {
+        background-image: none;
+        background-color: white;
+    }
+    .time-slider .slider-handle {
+        display: none;
     }
 
-    .time-slider {
-        padding: 0 15px;
+    .time-slider > div {
+        padding: 0px 1px 4px;
     }
 
-    .volume-slider {
+    .play-pause-cell {
+        width: 33px;
+    }
+
+    .play-next-cell {
+        width: 35px;
+    }
+
+    .shuffle-cell {
+        width: 76px;
+    }
+
+    .volume-cell {
+        width: 91px;
+    }
+
+    .volume-control {
         width: 90px;
+        padding: 0px 18px 0px 8px !important;
+        font-size: 20px;
+        text-align: left;
     }
+
+    .shuffle-control {
+        padding: 0px 10px;
+        cursor: pointer;
+        font-size: 20px;
+    }
+
+        .shuffle-control .icon {
+            width: 20px;
+        }
+
+
+        .shuffle-control .switch {
+            margin-left: 5px;
+            color: #AEAEAE;
+            transform: rotate(180deg);
+        }
+
+            .shuffle-control .switch.on {
+                color: #4895D7;
+                transform: rotate(0);
+            }
+
 
     .curUser {
         font-weight: bold;
@@ -52,10 +97,10 @@
 <div class="ng-cloak" ng-show="isInited">
 
     <div class="row" style="padding-top: 30px;">
-        <div class="col-md-4">
+        <div class="col-lg-4 col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <div class="clip-text"style="min-height: 20px;">
+                    <div class="clip-text" style="min-height: 20px;">
                         {{playerState.title()}}
                     </div>
                 </div>
@@ -68,41 +113,55 @@
                     <div>
                         <table style="width: 100%" class="player-controls">
                             <tr>
-                                <td class="play-pause">
-                                    <button ng-click="requestPlayPause()">
-                                        <i class="fa fa-play" ng-show="playerState.mode !== 'PLAYING'"></i>
-                                        <i class="fa fa-pause" ng-show="playerState.mode === 'PLAYING'"></i>
-                                    </button>
-                                </td>
-                                <td class="play-next">
-                                    <button ng-click="requestPlayNext()">
-                                        <i class="fa fa-fast-forward"></i>
-                                    </button>
-                                </td>
-                                <td class="time-slider">
-                                    <slider ng-model="playerState.time" min="0" step="1" max="playerState.length" tooltip="hide" on-stop-slide="requestVolumeUpdate" style="width: 100%;" ng-disabled="true" handle="triangle"></slider>
-                                </td>
-                                <td class="volume-slider">
-                                    <i class="fa fa-volume-up" style="font-size: 150%;" ng-show="playerVolume > 55"></i>
-                                    <i class="fa fa-volume-down" style="font-size: 150%;" ng-show="playerVolume > 0 && playerVolume <= 55" ></i>
-                                    <i class="fa fa-volume-off" style="font-size: 150%;" ng-show="playerVolume === 0"></i>
-                                    <slider ng-model="playerVolume" min="0" step="5" max="100" on-stop-slide="requestVolumeUpdate" style="width: 60px; float: right;"></slider>
+                                <td colspan="5" class="time-slider">
+                                    <div>
+                                        <slider ng-model="playerState.time" min="0" step="1" max="playerState.length" tooltip="hide" style="width: 100%;" ng-disabled="true" handle="round"></slider>
+                                    </div>
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="2">
-
+                                <td class="play-pause-cell">
+                                    <div ng-click="requestPlayPause()" class="btn btn-default btn-sm">
+                                        <i class="fa fa-play" ng-show="playerState.mode !== 'PLAYING'"></i>
+                                        <i class="fa fa-pause" ng-show="playerState.mode === 'PLAYING'"></i>
+                                    </div>
                                 </td>
-                                <td colspan="2">
-                                    {{playerState.time | duration}}
+                                <td class="play-next-cell">
+                                    <div ng-click="requestPlayNext()" class="btn btn-default btn-sm">
+                                        <i class="fa fa-fast-forward"></i>
+                                    </div>
+                                </td>
+                                <td class="volume-cell">
+                                    <div class="volume-control btn btn-default">
+                                        <span>
+                                            <i class="fa fa-volume-up" ng-show="playerVolume > 55"></i>
+                                            <i class="fa fa-volume-down" ng-show="playerVolume > 0 && playerVolume <= 55"></i>
+                                            <i class="fa fa-volume-off" ng-show="playerVolume === 0"></i>
+                                        </span>
+                                        <span>
+                                            <slider ng-model="playerVolume" min="0" step="5" max="100" on-stop-slide="requestVolumeUpdate" style="width: 38px; margin-top: -2px; float: right;"></slider>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="time-cell">
+                                    <div class="btn btn-sm btn-default" style="width: 100%">
+                                        {{playerState.time | duration}}                                        
+                                    </div>
+                                </td>
+                                <td class="shuffle-cell">
+                                    <div class="shuffle-control btn btn-default" ng-click="toggleShuffle()">
+                                        <i class="icon fa" ng-class="{'fa-random': isRandom, 'fa-navicon': !isRandom }"></i>
+                                        <i class="switch fa fa-toggle-on" ng-class="{ 'on' : isRandom }">
+                                        </i>
+                                    </div>
                                 </td>
                             </tr>
                         </table>
-                    </div>                    
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-lg-6 col-md-8">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <span>Playlist</span>
@@ -169,10 +228,11 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-lg-2 col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     Users
+                    <a class="pull-right" href="#" onclick="window.location.href = location.origin">sign out</a>
                 </div>
                 <div class="panel-body">
                     <ul style="list-style-type: none; padding: 0;">

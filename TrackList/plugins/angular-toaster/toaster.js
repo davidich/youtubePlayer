@@ -51,7 +51,7 @@
             // 'toast-bottom-left', 'toast-bottom-center', 'toast-bottom-right',
             'title-class': 'toast-title',
             'message-class': 'toast-message',
-            'prevent-duplicates': true,
+            'prevent-duplicates': false,
             'mouseover-timer-stop': true // stop timeout on mouseover and restart timer on mouseout
         }
     ).service(

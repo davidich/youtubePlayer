@@ -15,7 +15,8 @@ angular.module('services').factory('hub', function ($location, $q) {
         'updatePlayerState': null,
         'requestPlayPause': null,
         'requestPlayNext': null,
-        'updateVolume': null
+        'updateVolume': null,
+        'updateShuffle': null
     };
 
     // Subscribe for some SignalR events
@@ -51,7 +52,7 @@ angular.module('services').factory('hub', function ($location, $q) {
                 clientProxy[name] = createClientCallback(name);
             }
             function createClientCallback(methodName) {
-                return function() {
+                return function () {
                     if (typeof self.client[methodName] === "function") {
                         self.client[methodName].apply($.connection.trackListHub, $.makeArray(arguments));
                     } else {
@@ -88,15 +89,15 @@ angular.module('services').factory('hub', function ($location, $q) {
         var deferred = $q.defer();
 
         serverProxy.addUrl(self.username, url)
-            .done(function(result) {
+            .done(function (result) {
                 deferred.resolve(result);
             })
-            .fail(function(error) {
+            .fail(function (error) {
                 deferred.reject(error.message);
             });
 
 
-        return deferred.promise;        
+        return deferred.promise;
     }
 
     function removeTrackAsync(id) {
@@ -127,11 +128,13 @@ angular.module('services').factory('hub', function ($location, $q) {
 
     self.requestVolumeUpdate = serverProxy.requestVolumeUpdate;
 
+    self.notifyAboutShuffleUpdate = serverProxy.notifyAboutShuffleUpdate;
+
     self.addUrlAsync = addUrlAsync;
 
     self.removeTrackAsync = removeTrackAsync;
 
-    self.isMain = function() { return self.username === "oleksiy"; }
+    self.isMain = function () { return self.username === "oleksiy"; }
 
     // add methods of serverProxy
     //var serverMethodName;
@@ -142,6 +145,6 @@ angular.module('services').factory('hub', function ($location, $q) {
     //}
 
 
-    
-    return self;    
+
+    return self;
 });

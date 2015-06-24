@@ -13,7 +13,7 @@
 
     public class TrackListHub : Hub
     {
-        private static object playerState = null;
+        private static dynamic playerState = null;
         private static int playerVolume = 100;
 
         private const string YoutubeApiKey = "AIzaSyDbHCpfIGGlFFgqmJZapJ9ssQfk6i13jeE";
@@ -92,6 +92,9 @@
 
                 removedItem = Playlist[index];
                 Playlist.RemoveAt(index);
+
+                if (playerState.trackId == id)
+                    playerState = null;
             }
 
             Clients.All.updatePlayList(Playlist);
@@ -120,7 +123,10 @@
             Clients.All.updateVolume(value);
         }
 
-
+        public void NotifyAboutShuffleUpdate(bool value)
+        {
+            Clients.Others.updateShuffle(value);
+        }
         public override Task OnDisconnected(bool stopCalled)
         {
             var connectionId = Context.ConnectionId;

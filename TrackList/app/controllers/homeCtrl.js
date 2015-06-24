@@ -1,10 +1,12 @@
 ﻿'use strict';
 
 angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $location, $timeout, $interval, hub, youtubeApi, toaster) {
+
     var trackCounters = {};
     $scope.trackCounters = trackCounters;
 
     $scope.isInited = false;
+    $scope.isRandom = false;
     $scope.username = $route.current.params.username;
     $scope.tracks = [];
     $scope.users = [];
@@ -13,7 +15,6 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
         mode: "STOPPED",    // "STOPPED", "PLAYING", "PAUSED"
         time: 0,            // cur track time in secs
         length: 0,          // cur track length in secs
-        //volume: 100,        // 0 - 100
         trackId: undefined,
         title: function () {
             if (!$scope.playerState.trackId)
@@ -49,6 +50,7 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
     hub.client.requestPlayNext = onPlayNextRequested;
 
     hub.client.updateVolume = onVolumeUpdated;
+    hub.client.updateShuffle = onShuffleUpdated;
 
     hub.initAsync($scope.username).then(function () {
         if (!hub.isMain()) {
@@ -82,11 +84,25 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
 
 
     // Private methods
+    var notPlayedTracks = [];
+    function resetShuffle() {
+        notPlayedTracks = $scope.tracks;
+    }
+
+    function onShuffleUpdated(value) {
+        $scope.$apply(function () {
+            $scope.isRandom = value;
+        });
+
+        if (hub.isMain() && value) {
+            resetShuffle();
+        }
+    }
     function onVolumeUpdated(value) {
         $scope.playerVolume = value;
 
         if (hub.isMain()) {
-            youtubeApi.setVolume(value);            
+            youtubeApi.setVolume(value);
         }
     }
     function onPlayPauseRequested(id) {
@@ -139,7 +155,7 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
 
             if (hub.isMain()) {
                 _syncTrackCounters();
-
+                
                 if (isTrackListEmpty && trackList.length > 0) {
                     playNext();
                 }
@@ -186,8 +202,8 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
         $scope.newTrackUrl = "";
 
         hub.addUrlAsync(url)
-            .then(function (videoInfo) {
-                var title = trimTrackTitle(videoInfo.title);
+            .then(function (videoInfos) {
+                var title = trimTrackTitle(videoInfos[0].title);
                 toaster.success(title, "Track is added successfully");
             }).catch(function (error) {
                 toaster.error("An error has occured", error);
@@ -203,7 +219,7 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
             });
     }
 
-    function _syncTrackCounters() {
+    function _syncTrackCounters(dropValues) {
         // add missing tracks into counter dictionary
         angular.forEach($scope.tracks, function (track) {
             if (trackCounters[track.id] === undefined) {
@@ -212,9 +228,13 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
         });
 
         // remove obsolete counters for removed tracks
+        // and drop counters for played tracks (see issue #5)
         var obsoleteIds = [];
         angular.forEach(trackCounters, function (cnt, trackId) {
-            if (!getTrackById(trackId)) obsoleteIds.push(trackId);
+            if (!getTrackById(trackId))
+                obsoleteIds.push(trackId);
+            else if (trackCounters[trackId] > 0)
+                trackCounters[trackId] = 1;
         });
         angular.forEach(obsoleteIds, function (id) {
             delete trackCounters[id];
@@ -245,8 +265,24 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
         return randomId;
     }
 
+    function _getFollowingTrackId() {
+        var followingTrackIndex = 0;
+        for (var i = 0; i < $scope.tracks.length - 1; i++) {
+            if ($scope.tracks[i].id == $scope.playerState.trackId) {
+                followingTrackIndex = i + 1;
+                break;
+            }                
+        }
+        return $scope.tracks[followingTrackIndex].id;
+    }
+
     function playNext() {
-        var nextId = _getRandomTrackId();
+        var nextId;
+        if ($scope.isRandom) {
+            nextId = _getRandomTrackId();
+        } else {
+            nextId = _getFollowingTrackId();
+        }
         playPause(nextId);
     }
 
@@ -296,6 +332,15 @@ angular.module('controllers').controller('HomeCtrl', function ($scope, $route, $
     }
 
     $scope.playNext = playNext;
+
+    $scope.toggleShuffle = function () {
+        $scope.isRandom = !$scope.isRandom;
+
+        var state = $scope.isRandom ? "ON" : "OFF";
+        toaster.success("Shuffle is " + state);
+
+        hub.notifyAboutShuffleUpdate($scope.isRandom);
+    }
     // .$scope methods
 });
 
